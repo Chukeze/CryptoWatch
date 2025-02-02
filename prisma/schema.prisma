@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id String @id @default(uuid())
+  name String?
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallets Wallet[]
+  banned Boolean @default(false)
+  amount Decimal @default(0.000) @db.Decimal(32, 16)// total amoount in all wallets
+
+  transactionHistory TransactionHistory[]
+}
+
+model Wallet {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  watchlist Watchlist[] //user can store many watchlist to a wallet
+  amount Decimal @default(0) @db.Decimal(32,16) // amount in this wallet
+  note String?
+
+  transactionHistory TransactionHistory[]
+}
+
+model Coin {
+  id String @id
+  name String
+  currentPrice Decimal?
+  platform String
+  symbol String
+  marketCap Decimal?
+
+  transactionHistory TransactionHistory[]
+}
+
+model Watchlist {
+  id String @id @default(uuid())
+  walletId String
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  note String?
+
+  watchlistCoins WatchListCoins[]
+}
+
+model WatchListCoins { //Pivot table
+  id String @id @default(uuid())
+  watchlistId String
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id])
+  coinId String
+  coin Coin @relation(fields: [coinId], references: [id])
+
+  desiredAmount Decimal @default(0.0) @db.Decimal(32, 16)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  note String?
+
+  @@unique([watchlistId, coinId])
+}
+
+model TransactionHistory {//transaction history per user
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  coinId String
+  coin Coin @relation(fields: [coinId], references: [id])
+  walletId String
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  type TransactionType
+  amount Decimal @db.Decimal(32, 16)
+  price Decimal @db.Decimal(32, 16)
+  createdAt DateTime @default(now()) @db.Timestamp(6)// fix this to be nano-second precision
+
+  @@unique([userId, coinId, walletId, type, createdAt])
+  @@index([userId, coinId, walletId])
+}
+
+enum TransactionType {
+  BUY
+  SELL
+  DEPOSIT
+  WITHDRAW
+}
