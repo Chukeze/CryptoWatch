@@ -12,7 +12,7 @@ export class UsersService {
     name: string,
     isBanned: boolean,
   ): Promise<object> {
-    
+
     const hashedPassword: string = await bcrypt.hash(password, 10);
 
     return await this.prisma.user
@@ -20,7 +20,7 @@ export class UsersService {
         data: {
           email,
           password: hashedPassword,
-          name : name,
+          name,
           banned: isBanned,
         },
       })
@@ -91,6 +91,23 @@ export class UsersService {
         watchlist:true
       }
     });
+  }
+
+  async createWallet(userId: string, name: string, note?: string): Promise<object> {
+    return await this.prisma.user.update({
+        where: { id: userId},
+        data: {
+            wallet: {
+                create: {
+                    name: name,
+                    note: note,
+                },
+            },
+        },
+        include: {
+            wallet: true,
+        }
+    })
   }
 
   //Admin functionality

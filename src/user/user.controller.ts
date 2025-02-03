@@ -13,6 +13,7 @@ import { UsersService } from './user.service';
 import { createUserDto } from '../auth/dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateWatchListDto } from './dto/create-watchlist.dto';
+import { CreateWalletDto } from './dto/create-wallet.dto';
 
 @Controller('users')
 export class UsersController {
@@ -42,9 +43,15 @@ export class UsersController {
   }
 
   @HttpCode(HttpStatus.CREATED)
+  @Post('createWallet')
+  async createWallet(@Body() createWalletDto: CreateWalletDto) {
+    return await this.userservice.createWallet(createWalletDto.userId, createWalletDto.name, createWalletDto.note);
+  }
+
+  @HttpCode(HttpStatus.CREATED)
   @Post('createWatchList')
   async createWatchlist(@Body() createWatchListDto: CreateWatchListDto) {
-    return await this.userservice.createWatchList(createWatchListDto.WalletId);
+    return await this.userservice.createWatchList(createWatchListDto.WalletId, createWatchListDto.note);
   }
 
   @HttpCode(HttpStatus.ACCEPTED)
